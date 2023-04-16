@@ -1,0 +1,118 @@
+what is transudcer?
+transducer convert physical data such as temperature ,ligh intensity and speed to electical singals>Sepending on the transducer, hte ouput produced is in the from of voltage ,current resistance or capacitance.
+transducer :is something that changes the ouput voltage based on the changing of pyhsical probery value.
+
+for example if there is a material which it's resistance change with temp change.
+
+like the ldr (photo resistor) which its resistance changes based on the changes of the light intensity.
+
+the lm35 :is a temperature sensor i connect one end with the 5 volt and the right end to the ground 
+and the middle end i take the voltage reading from and this reading changes linarly with the changin of the 
+temperature. on some range.
+
+any analog sensor work like this have three pins and the pin in the center gives changing voltage based on
+the change of the physical proberty it measures .
+
+if pin of the microcontroller if it was input it only measures one state high or low 
+and it won't able to detect the change in the volt comming from those analog sensors.
+
+this is the job of the adc .
+
+every adc have a reslution and it is determined the the size of the number of bits that this adc 
+use to store the value of the reading.
+
+we sit the refrance voltage value of the adc ,which is the maximum voltage that can be input to this adc.
+and it map the analog value between the lowets and the higest voltage that is coming from the sensor and put the value in the 
+registerr of the adc so for example :
+if there is a sensor that reads temp from 0 to 100 and its resistance changes based on the temp it's reading 
+i can make a voltage divider circuit and put the sensor as on of the two resistors and give 5 volt to the circut and hte 
+other end of the circut connected to the ground and take the voltage reading between the sensor and the other 
+resistor when the temp change the resistance of the sensor will change and the output voltage will change 
+. and i can take this reading and enter it to the microcontroller if the temp 0 the ouput voltage will be 0 
+and if the temp was 100 the the sensor will have no resistance and the ouput voltage will be 5 and the job 
+of the adc to map every little change on this input voltage to the microcontroller to a change 
+of the register of the adc .
+
+ so for example if the adc resultion was 10 bit that measn he have a 10 bit to put the values on it 
+
+ and the resltion of this adc will be 5v /1024=4.88 mv so every increase about 4.88 mv the reading in this 
+ register will increase by one so if the reading was 0 the 10 bit value will be zero and if the reading 
+ was 3mv the 10bit register reading will be 0 also and if the reading was 5 the reading of the 10 bit will be 
+ like this 00 0000 0001 and if it was 10 mv it will be like this 00 0000 0010 and so on and if it was 5 volt 
+ it will be like this 11 1111 1111 which is the maximum value that this adc can detect.
+
+ i should look for something when configure any microcontroller wiht its adc :
+ which pin should i connect the sensor ouput to .
+ what is the register address that this adc will write its value to .
+
+ the pins that can connect to analog voltage(and the only ones ) in atmega 32 and those pins are the only ones that 
+ is connected to the adc of the microcontroller .
+
+ the multiplexer is something that have a lot of inputs and allow one on them to be the  ouput at a time.
+ because it only have one ouput pin or more as i think but should be less than the input number of pins .
+
+ in in our microcontroller the multiplexer of the adc have a register that i can write a value to 
+ it to choose which pin of the port a will be input to the adc in which time .
+
+ everything in the microcontroller needs clock ot operate so for example the dio pins 
+ also need clock to work but in atmega 32 it uses the same clock of the cpu and can't be changed.
+ so if i was having a 8mhz crystal and connect high to input pin and stop it before 8 micro second passess 
+ the cpu won't know that there was a high on the pin .
+
+ the adc also needs clock to work which is between 50 khz and 200 khz .
+
+ and we need hardware circut inside the microcontroller called prescaller will take the 8mhz of the 
+ crystal we have and output a pulse every  64 clock to map from 8 mhz to 200k reqired by the adc.
+
+ in our register there are fixed values that can be written to this prescaller .
+
+ and the voltage refrance can be set in a register called adumax first left two bits .
+the other bits of this regissterr is used for the multiplexer which i choose which pin of port a pin i will read from .
+
+
+in embedded it is forbidden to put numbers in the code all #define and enums.
+
+the adcsra first bit is enable which start and stop the adc and here there is a problem 
+if i want to save the power because i m working on a bettery i should not leave the adc working all time 
+i should start it when i want to read analog data and stop it after but our adc from the data sheet take 25 cycle 
+the first read after first working which is slow comparing the time required to read after that 13 ms.
+
+the adc can work in two modes singel conversion mode which will give me one reading of the sensor on the required pin and stop 
+and free running mode will give readings every 13 ms continus.
+
+the read of the adc gets stored in two registers because our system is 8 bit so the max register size 
+is 8 bit and there is two option to store the reading of each register (in our system the reading get stored in two register next two next to each other).
+and in the data sheet it gives me two options one to and i will explain with exmaple if the reading was 512.
+which is represneted in the binary this way 10 0000 0011 
+lets assume the registers are in the memory addresses 0x24,0x25;
+the first option :
+
+0x25= 0000 0010 //adc high 
+0x24= 0000 0011  //adc low
+the second option :
+0x25= 1000 0000 //adc high 
+
+0x24= 1100 0000 //adc low
+
+in the first option i can make a short variable and give it the address of the first register only and the compiler will read the 
+two register together .
+
+the usage of the second option if want the speed of reading instead of reading two register i could the 
+the adc high register only and ignore the low beacuse this will affect the accuracy in 15mv only if the refrence was 5 v.
+which is not a big deal if i care about the speed of reading instead of the accuracy.
+
+
+the should put the pins of the adc that the sensor is connected to as infree,because inpullup the internal resistor will change the value of the reading 
+and ouput will ouput a voltage and the sensor will input a voltage and this will make a problem .
+
+there is a pin called avcc this pin i should connect the refrence voltage to it so the adc can take this pin as a refrence .
+
+tasks:
+1-write a funcion that print the volt of a sensor on the screen not a number .
+2- connect the ldr to the kit and make it have four levels and there are four leds working from the led array of hte kit.
+first level with the flash of the mobile there will be no led working .
+second level : the room noraml light one led working 
+third level : the room is dark three leds working 
+fourth level : i coverd the sensor the four leds should work.
+3_ search the benefit of the diffrencial mode  which i can use to measure the voltage differnce between two pins of adc instead of readding one pin value.
+
